@@ -7,13 +7,18 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Math/Vector.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ABRUTALCLODOCharacter
 
 ABRUTALCLODOCharacter::ABRUTALCLODOCharacter()
 {
+	IsJumping = 0;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -54,8 +59,8 @@ void ABRUTALCLODOCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ABRUTALCLODOCharacter::clodoJump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ABRUTALCLODOCharacter::clodoStopJumping);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABRUTALCLODOCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ABRUTALCLODOCharacter::MoveRight);
@@ -72,6 +77,8 @@ void ABRUTALCLODOCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &ABRUTALCLODOCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &ABRUTALCLODOCharacter::TouchStopped);
 
+
+
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ABRUTALCLODOCharacter::OnResetVR);
 }
@@ -82,14 +89,53 @@ void ABRUTALCLODOCharacter::OnResetVR()
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 }
 
+void ABRUTALCLODOCharacter::clodoJump()
+{
+	Jump();
+	if (IsJumping == 1 )
+	{
+	ACharacter::LaunchCharacter(FVector(0, 0, 500), false, false);
+	IsJumping++;
+	faisSAlto = true;
+	}
+	
+}
+void ABRUTALCLODOCharacter::clodoStopJumping()
+{
+	StopJumping();
+	IsJumping++;
+	
+}
+
+void ABRUTALCLODOCharacter::Landed(const FHitResult & Hit)
+{
+	Super::Landed(Hit);
+
+	IsJumping = 0;
+}
+
+
 void ABRUTALCLODOCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
 		Jump();
+		/*static void DrawDebugString
+		(
+			UObject * WorldContextObject,
+			const FVector TextLocation,
+			const FString & Text,
+			class AActor * TestBaseActor,
+			FLinearColor TextColor,
+			float Duration
+		)*/
+
+
+
 }
 
 void ABRUTALCLODOCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
 		StopJumping();
+	
 }
 
 void ABRUTALCLODOCharacter::TurnAtRate(float Rate)
